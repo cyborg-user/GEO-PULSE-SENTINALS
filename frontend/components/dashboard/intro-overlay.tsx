@@ -304,12 +304,61 @@ function playMilitaryIntroSound() {
     masterGain.gain.setValueAtTime(0.7, t + 5.5)
     masterGain.gain.linearRampToValueAtTime(0, t + 6.5)
 
-    setTimeout(() => ctx.close().catch(() => {}), 7500)
+    setTimeout(() => ctx.close().catch(() => { }), 7500)
     return ctx
   } catch {
     return null
   }
 }
+
+// Scramble text effect
+const ScrambleText = ({ text, delay = 0 }: { text: string; delay?: number }) => {
+  const [display, setDisplay] = useState('')
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*'
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>
+    let interval: ReturnType<typeof setInterval>
+    let iteration = 0
+
+    timeout = setTimeout(() => {
+      interval = setInterval(() => {
+        setDisplay(
+          text
+            .split('')
+            .map((char, idx) => {
+              if (char === ' ') return ' '
+              if (idx < iteration) return text[idx]
+              return chars[Math.floor(Math.random() * chars.length)]
+            })
+            .join('')
+        )
+        iteration += 1 / 2
+        if (iteration >= text.length) {
+          setDisplay(text)
+          clearInterval(interval)
+        }
+      }, 40)
+    }, delay)
+
+    return () => {
+      clearTimeout(timeout)
+      clearInterval(interval)
+    }
+  }, [text, delay])
+
+  return <>{display}</>
+}
+
+// Boot sequence lines
+const bootLines = [
+  'INITIALIZING SECURE UPLINK...',
+  'CONNECTING TO SATELLITE NETWORK...',
+  'DECRYPTING INTELLIGENCE FEEDS...',
+  'CALIBRATING THREAT MATRIX...',
+  'LOADING GEOSPATIAL MODULES...',
+  'SYSTEM ARMED // READY',
+]
 
 export default function IntroOverlay({ onComplete }: { onComplete: () => void }) {
   const [phase, setPhase] = useState<'boot' | 'title' | 'subtitle' | 'status' | 'exit'>('boot')
@@ -336,60 +385,11 @@ export default function IntroOverlay({ onComplete }: { onComplete: () => void })
   useEffect(() => {
     return () => {
       if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-        audioCtxRef.current.close().catch(() => {})
+        audioCtxRef.current.close().catch(() => { })
         audioCtxRef.current = null
       }
     }
   }, [])
-
-  // Scramble text effect
-  const ScrambleText = ({ text, delay = 0 }: { text: string; delay?: number }) => {
-    const [display, setDisplay] = useState('')
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*'
-
-    useEffect(() => {
-      let timeout: NodeJS.Timeout
-      let interval: NodeJS.Timeout
-      let iteration = 0
-
-      timeout = setTimeout(() => {
-        interval = setInterval(() => {
-          setDisplay(
-            text
-              .split('')
-              .map((char, idx) => {
-                if (char === ' ') return ' '
-                if (idx < iteration) return text[idx]
-                return chars[Math.floor(Math.random() * chars.length)]
-              })
-              .join('')
-          )
-          iteration += 1 / 2
-          if (iteration >= text.length) {
-            setDisplay(text)
-            clearInterval(interval)
-          }
-        }, 40)
-      }, delay)
-
-      return () => {
-        clearTimeout(timeout)
-        clearInterval(interval)
-      }
-    }, [text, delay])
-
-    return <>{display}</>
-  }
-
-  // Boot sequence lines
-  const bootLines = [
-    'INITIALIZING SECURE UPLINK...',
-    'CONNECTING TO SATELLITE NETWORK...',
-    'DECRYPTING INTELLIGENCE FEEDS...',
-    'CALIBRATING THREAT MATRIX...',
-    'LOADING GEOSPATIAL MODULES...',
-    'SYSTEM ARMED // READY',
-  ]
 
   if (!hasInteracted) {
     return (
@@ -454,7 +454,6 @@ export default function IntroOverlay({ onComplete }: { onComplete: () => void })
 
   return (
     <AnimatePresence>
-      {phase !== 'exit' ? null : null}
       <motion.div
         className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-sentinel-navy overflow-hidden"
         exit={{ opacity: 0 }}
@@ -508,31 +507,17 @@ export default function IntroOverlay({ onComplete }: { onComplete: () => void })
 
         {/* Boot sequence text - top left */}
         <div className="absolute top-8 left-8 font-mono text-[11px] text-sentinel-cyan/50 leading-relaxed">
-          {phase !== 'boot' ? (
-            bootLines.map((line, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.05, duration: 0.15 }}
-              >
-                <span className="text-sentinel-cyan/30 mr-2">{'>'}</span>
-                {line}
-              </motion.div>
-            ))
-          ) : (
-            bootLines.map((line, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.08, duration: 0.15 }}
-              >
-                <span className="text-sentinel-cyan/30 mr-2">{'>'}</span>
-                {line}
-              </motion.div>
-            ))
-          )}
+          {bootLines.map((line, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: phase !== 'boot' ? 0.05 : i * 0.08, duration: 0.15 }}
+            >
+              <span className="text-sentinel-cyan/30 mr-2">{'>'}</span>
+              {line}
+            </motion.div>
+          ))}
         </div>
 
         {/* System metrics - top right */}

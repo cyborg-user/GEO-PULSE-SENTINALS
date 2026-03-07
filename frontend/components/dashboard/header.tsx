@@ -10,6 +10,28 @@ import {
   Activity,
 } from 'lucide-react'
 
+const timeFormatter = new Intl.DateTimeFormat('en-US', {
+  hour12: false,
+  timeZone: 'UTC',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+})
+
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'UTC',
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+})
+
+const STATUS_INDICATORS = [
+  { label: 'DATA FEED', icon: Wifi, status: 'active' },
+  { label: 'SAT LINK', icon: Satellite, status: 'active' },
+  { label: 'SIGINT', icon: Radio, status: 'active' },
+  { label: 'ANALYTICS', icon: Activity, status: 'active' },
+] as const
+
 export default function DashboardHeader() {
   const [time, setTime] = useState('')
   const [date, setDate] = useState('')
@@ -17,23 +39,8 @@ export default function DashboardHeader() {
   useEffect(() => {
     const update = () => {
       const now = new Date()
-      setTime(
-        now.toLocaleTimeString('en-US', {
-          hour12: false,
-          timeZone: 'UTC',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        })
-      )
-      setDate(
-        now.toLocaleDateString('en-US', {
-          timeZone: 'UTC',
-          year: 'numeric',
-          month: 'short',
-          day: '2-digit',
-        })
-      )
+      setTime(timeFormatter.format(now))
+      setDate(dateFormatter.format(now))
     }
     update()
     const interval = setInterval(update, 1000)
@@ -60,10 +67,9 @@ export default function DashboardHeader() {
 
       {/* Center: Status Indicators */}
       <div className="hidden md:flex items-center gap-6">
-        <StatusBadge icon={<Wifi className="w-3 h-3" />} label="DATA FEED" status="active" />
-        <StatusBadge icon={<Satellite className="w-3 h-3" />} label="SAT LINK" status="active" />
-        <StatusBadge icon={<Radio className="w-3 h-3" />} label="SIGINT" status="active" />
-        <StatusBadge icon={<Activity className="w-3 h-3" />} label="ANALYTICS" status="active" />
+        {STATUS_INDICATORS.map(({ label, icon: Icon, status }) => (
+          <StatusBadge key={label} icon={<Icon className="w-3 h-3" />} label={label} status={status} />
+        ))}
       </div>
 
       {/* Right: Time + Alerts */}
@@ -85,6 +91,12 @@ export default function DashboardHeader() {
   )
 }
 
+const STATUS_COLORS = {
+  active: { bg: 'bg-sentinel-green', text: 'text-sentinel-green' },
+  warning: { bg: 'bg-sentinel-amber', text: 'text-sentinel-amber' },
+  offline: { bg: 'bg-sentinel-red', text: 'text-sentinel-red' },
+} as const
+
 function StatusBadge({
   icon,
   label,
@@ -94,19 +106,15 @@ function StatusBadge({
   label: string
   status: 'active' | 'warning' | 'offline'
 }) {
-  const colors = {
-    active: 'text-sentinel-green',
-    warning: 'text-sentinel-amber',
-    offline: 'text-sentinel-red',
-  }
+  const { bg, text } = STATUS_COLORS[status]
 
   return (
     <div className="flex items-center gap-1.5">
-      <span className={`relative flex h-1.5 w-1.5`}>
-        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status === 'active' ? 'bg-sentinel-green' : status === 'warning' ? 'bg-sentinel-amber' : 'bg-sentinel-red'}`} />
-        <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${status === 'active' ? 'bg-sentinel-green' : status === 'warning' ? 'bg-sentinel-amber' : 'bg-sentinel-red'}`} />
+      <span className="relative flex h-1.5 w-1.5">
+        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${bg}`} />
+        <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${bg}`} />
       </span>
-      <span className={`${colors[status]}`}>{icon}</span>
+      <span className={text}>{icon}</span>
       <span className="text-[10px] font-mono text-muted-foreground tracking-wider">{label}</span>
     </div>
   )

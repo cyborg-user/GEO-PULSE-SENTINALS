@@ -16,11 +16,8 @@ import {
   CloudLightning,
   MapPin,
   Users,
-frontend
   Download,
   Activity,
-
- main
 } from 'lucide-react'
 import type { Country } from '@/lib/dashboard-data'
 import { riskLevelConfig } from '@/lib/dashboard-data'
@@ -53,7 +50,6 @@ export default function CountryPanel({ country, onClose }: CountryPanelProps) {
     <aside className="w-72 shrink-0 bg-sentinel-surface border-l border-border flex flex-col overflow-hidden">
       {/* Panel Header */}
       <div className="h-10 flex items-center justify-between px-3 border-b border-border shrink-0">
- frontend
         <div className="flex items-center gap-2">
           <Activity className="w-3.5 h-3.5 text-sentinel-cyan animate-pulse" />
           <span className="text-[10px] font-mono text-sentinel-cyan tracking-[0.2em]">INTEL REPORT</span>
@@ -76,15 +72,6 @@ export default function CountryPanel({ country, onClose }: CountryPanelProps) {
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
-
-        <span className="text-[10px] font-mono text-sentinel-cyan tracking-[0.2em]">INTEL REPORT</span>
-        <button
-          onClick={onClose}
-          className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-sentinel-cyan transition-colors"
-          aria-label="Close panel"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -297,7 +284,6 @@ function IndicatorCard({ icon, label, value, color }: { icon: React.ReactNode; l
 }
 
 function RiskTrendChart({ data, color }: { data: number[]; color: string }) {
- frontend
   const { points, min, range, height, width } = useMemo(() => {
     const maxVal = Math.max(...data)
     const minVal = Math.min(...data)
@@ -313,19 +299,6 @@ function RiskTrendChart({ data, color }: { data: number[]; color: string }) {
 
     return { points: pts, min: minVal, range: rangeVal, height: h, width: w }
   }, [data])
-
-  const max = Math.max(...data)
-  const min = Math.min(...data)
-  const range = max - min || 1
-  const height = 50
-  const width = 200
-
-  const points = data.map((val, i) => {
-    const x = (i / (data.length - 1)) * width
-    const y = height - ((val - min) / range) * height
-    return `${x},${y}`
-  }).join(' ')
- main
 
   return (
     <div className="relative">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import {
   Activity,
   Flame,
@@ -13,51 +13,55 @@ import {
 import { globalEvents, eventTypeConfig, severityConfig } from '@/lib/dashboard-data'
 import type { GlobalEvent } from '@/lib/dashboard-data'
 
+const eventIcons: Record<string, React.ReactNode> = {
+  earthquake: <Activity className="w-3.5 h-3.5" />,
+  wildfire: <Flame className="w-3.5 h-3.5" />,
+  storm: <CloudLightning className="w-3.5 h-3.5" />,
+  conflict: <Crosshair className="w-3.5 h-3.5" />,
+  market: <TrendingUp className="w-3.5 h-3.5" />,
+}
+
+const formatTimestamp = (ts: string) => {
+  const d = new Date(ts)
+  const now = new Date()
+  const diffMs = now.getTime() - d.getTime()
+  const diffHrs = Math.floor(diffMs / (1000 * 60 * 60))
+  if (diffHrs < 1) return 'JUST NOW'
+  if (diffHrs < 24) return `${diffHrs}H AGO`
+  const diffDays = Math.floor(diffHrs / 24)
+  return `${diffDays}D AGO`
+}
+
 export default function EventTimeline() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
 
-  const checkScroll = () => {
+  const checkScroll = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
     setCanScrollLeft(el.scrollLeft > 0)
     setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10)
-  }
+  }, [])
 
   useEffect(() => {
     checkScroll()
     const el = scrollRef.current
     if (el) {
       el.addEventListener('scroll', checkScroll)
-      return () => el.removeEventListener('scroll', checkScroll)
+      window.addEventListener('resize', checkScroll)
+      return () => {
+        el.removeEventListener('scroll', checkScroll)
+        window.removeEventListener('resize', checkScroll)
+      }
     }
-  }, [])
+  }, [checkScroll])
 
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollRef.current
     if (!el) return
     const scrollAmount = 320
     el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' })
-  }
-
-  const eventIcons: Record<string, React.ReactNode> = {
-    earthquake: <Activity className="w-3.5 h-3.5" />,
-    wildfire: <Flame className="w-3.5 h-3.5" />,
-    storm: <CloudLightning className="w-3.5 h-3.5" />,
-    conflict: <Crosshair className="w-3.5 h-3.5" />,
-    market: <TrendingUp className="w-3.5 h-3.5" />,
-  }
-
-  const formatTimestamp = (ts: string) => {
-    const d = new Date(ts)
-    const now = new Date()
-    const diffMs = now.getTime() - d.getTime()
-    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60))
-    if (diffHrs < 1) return 'JUST NOW'
-    if (diffHrs < 24) return `${diffHrs}H AGO`
-    const diffDays = Math.floor(diffHrs / 24)
-    return `${diffDays}D AGO`
   }
 
   return (
